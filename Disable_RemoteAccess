@@ -1,0 +1,26 @@
+# PowerShell script to disable WinRM, RDP, and close the associated firewall ports
+
+# Disabling WinRM
+Write-Host "Disabling Windows Remote Management (WinRM)..."
+Stop-Service WinRM
+Set-Service -Name WinRM -StartupType Disabled
+Disable-PSRemoting -Force
+
+# Closing firewall ports for WinRM
+Write-Host "Closing firewall ports for WinRM..."
+Remove-NetFirewallRule -DisplayName "WinRM HTTP"
+Remove-NetFirewallRule -DisplayName "WinRM HTTPS"
+
+# Disabling Remote Desktop Protocol (RDP)
+Write-Host "Disabling Remote Desktop Protocol (RDP)..."
+Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 1
+
+# Removing subnet 10.1.x.x from TrustedHosts (if previously added)
+Write-Host "Removing subnet 10.1.x.x from TrustedHosts..."
+Set-Item WSMan:\localhost\Client\TrustedHosts -Value "" -Force
+
+# Configuring the firewall to block RDP
+Write-Host "Configuring firewall to block RDP..."
+Disable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+Write-Host "WinRM, RDP, and firewall configurations have been disabled."
