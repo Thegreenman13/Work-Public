@@ -1,0 +1,38 @@
+# PowerShell script to enable WinRM and RDP, and add subnet 10.1.x.x to TrustedHosts for non-domain-joined machines
+# Needs to be run on both Source and Target machines
+
+# Enabling WinRM
+Write-Host "Enabling Windows Remote Management (WinRM)..."
+Set-Service -Name WinRM -StartupType Automatic
+Start-Service WinRM
+Enable-PSRemoting -Force
+
+# Configuring WinRM to accept remote connections
+Write-Host "Configuring WinRM for remote access..."
+winrm quickconfig -q
+
+# Open firewall ports for WinRM
+
+# Open HTTP port (5985) for WinRM
+Write-Host "Opening HTTP port (5985) for WinRM..."
+New-NetFirewallRule -DisplayName "WinRM HTTP" -Direction Inbound -Protocol TCP -LocalPort 5985 -Action Allow
+
+# Open HTTPS port (5986) for WinRM
+Write-Host "Opening HTTPS port (5986) for WinRM..."
+New-NetFirewallRule -DisplayName "WinRM HTTPS" -Direction Inbound -Protocol TCP -LocalPort 5986 -Action Allow
+
+Write-Host "Firewall ports for WinRM have been opened."
+
+# Adding 10.1.x.x subnet to TrustedHosts for WinRM
+Write-Host "Adding 10.1.x.x subnet to WinRM TrustedHosts..."
+Set-Item WSMan:\localhost\Client\TrustedHosts -Value "10.1.*" -Force
+
+# Enabling Remote Desktop Protocol (RDP)
+Write-Host "Enabling Remote Desktop Protocol (RDP)..."
+Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
+
+# Configuring the firewall to allow RDP
+Write-Host "Configuring firewall to allow RDP..."
+Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+Write-Host "WinRM, RDP, and TrustedHosts configuration are complete."
